@@ -1,0 +1,697 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Recursive Types For Free! by damienstanton</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Recursive Types For Free!</h1>
+        <p>Just wanting to read this classic paper by Wadler in something prettier than plain ASCII</p>
+
+        <p class="view"><a href="https://github.com/damienstanton/recursive-types-for-free">View the Project on GitHub <small>damienstanton/recursive-types-for-free</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/damienstanton/recursive-types-for-free/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/damienstanton/recursive-types-for-free/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/damienstanton/recursive-types-for-free">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h2>
+<a id="recursive-types-for-free" class="anchor" href="#recursive-types-for-free" aria-hidden="true"><span class="octicon octicon-link"></span></a>Recursive types for free!</h2>
+
+<h3>
+<a id="philip-wadler" class="anchor" href="#philip-wadler" aria-hidden="true"><span class="octicon octicon-link"></span></a>Philip Wadler</h3>
+
+<h3>
+<a id="university-of-glasgow" class="anchor" href="#university-of-glasgow" aria-hidden="true"><span class="octicon octicon-link"></span></a>University of Glasgow</h3>
+
+<h3>
+<a id="july-1990-some-typos-fixed-aug-2008-oct-2014" class="anchor" href="#july-1990-some-typos-fixed-aug-2008-oct-2014" aria-hidden="true"><span class="octicon octicon-link"></span></a>July 1990 [some typos fixed Aug 2008, Oct 2014]</h3>
+
+<p><em>DRAFT</em></p>
+
+<p>Recursive types pervade programming: <em>lists</em>, <em>trees</em>, and <em>streams</em> being
+three of the most common examples.  Recursive types come in two
+principle flavours, least fixpoint or greatest fixpoint.  For example,
+the least fixpoint</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">Lfix</span> <span class="pl-c1">X</span>. <span class="pl-c1">1</span> + <span class="pl-c1">A</span>*<span class="pl-c1">X</span></pre></div>
+
+<p>yields lists with elements of type <code>A</code>, the least fixpoint</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">Lfix</span> <span class="pl-c1">X</span>. <span class="pl-c1">A</span> + <span class="pl-c1">X</span>*<span class="pl-c1">X</span></pre></div>
+
+<p>yields binary trees with leaves of type <code>A</code>, and the greatest fixpoint</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">Gfix</span> <span class="pl-c1">X</span>. <span class="pl-c1">A</span>*<span class="pl-c1">X</span></pre></div>
+
+<p>yields streams with elements of type <code>A</code>.</p>
+
+<p>Adding recursive types can alter the nature of a type system.  The
+polymorphic lambda calculus has the pleasant propery of being strongly
+normalising: all reduction sequences terminate in a normal form.  But
+augmenting this calculus with the type</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">Lfix</span> <span class="pl-c1">X</span>. <span class="pl-c1">1</span> + (<span class="pl-c1">X</span> -&gt; <span class="pl-c1">X</span>)</pre></div>
+
+<p>has the unpleasant consequence of introducing terms with no normal
+form.  Fortunately, strong normalisation can be preserved by a mild
+restriction: don't allow the recursive type variable to appear in a
+negative position.  The example violates this constraint, because the
+recursive type variable <code>X</code> appears to the left of the function arrow.</p>
+
+<p>Thus, it is safe to extend the polymorphic lambda calculus by adding
+least fixpoint types with type variables in positive position.  Indeed,
+no extension is required: such types already exist in the language!  If
+<code>F X</code> represents a type containing <code>X</code> in positive position only, then least
+fixpoints may be defined in terms of universal quantification:</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">Lfix</span> <span class="pl-c1">X</span>. <span class="pl-c1">F</span> <span class="pl-c1">X</span>  =  <span class="pl-c1">All</span> <span class="pl-c1">X</span>. (<span class="pl-c1">F</span> <span class="pl-c1">X</span> -&gt; <span class="pl-c1">X</span>) -&gt; <span class="pl-c1">X</span>.</pre></div>
+
+<p>This introduces a new type, <code>T = Lfix X</code>. <code>F X</code>, satisfying the isomorphism
+<code>T ~ F T</code>.  Note that it is an isomorphism, not an equality:  the type
+comes equipped with functions <code>in : T -&gt; F T</code> and <code>out : F T -&gt; T</code>.  This
+formula can be found, for instance, in [Freyd 89] and [Wraith 89].  It
+is not as widely known as it should be -- I know of several computer
+scientists who have re-invented this particular wheel.  The excellent
+textbook by Girard, Lafont, and Taylor [GLT 89] gives several special
+cases, but not this general form.</p>
+
+<p>More interestingly, polymorphic lambda calculus also contains greatest
+fixpoints.  These may be defined in terms of existential quantification</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">Gfix</span> <span class="pl-c1">X</span>. <span class="pl-c1">F</span> <span class="pl-c1">X</span>  =  <span class="pl-c1">Exists</span> <span class="pl-c1">X</span>. (<span class="pl-c1">X</span> -&gt; <span class="pl-c1">F</span> <span class="pl-c1">X</span>) * <span class="pl-c1">X</span>,</pre></div>
+
+<p>again subject to the restriction that <code>X</code> appears only positively in <code>F X</code>.
+This is a little surprising: greatest fixpoints allow infinite objects,
+such as streams, yet the strong normalisation property is preserved.
+Surprising, but not new: it was known previously that greatest
+fixpoints and strong normalisation could co-exist: both [Hagino 87] and
+[Mendler 87] describe type systems that include Lfix and Gfix and have
+strong normalisation.  But the encoding provides a simple proof of this
+fact.  Hagino refers to the coding of least fixpoints, but says that he
+doesn't know of a coding for greatest fixpoints; Mendler doesn't refer
+to either coding, but gives a lengthy proof that adding least and
+greatest fixpoints to polymorphic lambda calculus preserves strong
+normalisation.</p>
+
+<p>(As it turns out, not new either: I have since discovered that Wraith
+also describes this encoding [Wraith 89], although there is a small
+technical error: he writes</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">Gfix</span> <span class="pl-c1">X</span>. <span class="pl-c1">F</span> <span class="pl-c1">X</span>  =  <span class="pl-c1">Exists</span> <span class="pl-c1">X</span>. <span class="pl-c1">X</span> -&gt; (<span class="pl-c1">X</span> -&gt; <span class="pl-c1">F</span> <span class="pl-c1">X</span>),</pre></div>
+
+<p>which is incorrect.)</p>
+
+<h3>
+<a id="least-fixpoints-as-weak-initial-algebras" class="anchor" href="#least-fixpoints-as-weak-initial-algebras" aria-hidden="true"><span class="octicon octicon-link"></span></a>LEAST FIXPOINTS AS WEAK INITIAL ALGEBRAS</h3>
+
+<p>Let's now look at the fixpoint result in a little more detail.
+This will require a mild dose of category theory.  Don't panic:
+all terms will be explained as we go along.</p>
+
+<p>By a functor F in polymorphic lambda calculus, we will mean an operation
+taking types into types, and terms into terms, such that if <code>t : U -&gt; V</code>
+then <code>F t : F U -&gt; F V</code>, and preserving identities and composition:
+<code>F id = id</code> and <code>F (f . g) = F f . F g</code>.  Every type <code>U</code> containing a type
+variable <code>X</code> in positive positions only corresponds to a functor <code>F X = U</code>,
+which takes the type <code>T</code> into the the type <code>F T = U[T/X]</code>.</p>
+
+<p>An object in a category is weakly initial if there is a map from it to
+every other object, and initial if this map is unique.  In categorical
+terms, the least fixpoint of <code>F</code> corresponds to an initial <em>F-algebra</em>.  An
+F-algebra is a pair <code>(X,k)</code> consisting of an object <code>X</code> and an arrow
+<code>k : F X -&gt; X</code>.  These form a category, where a morphism between <code>(X,k)</code> and
+<code>(X',k')</code> is given by an arrow <code>h : X -&gt; X'</code> such that the diagram</p>
+
+<pre><code>                     k            
+             F X ----------&gt; X   
+              |              |    
+              |              |    
+(1)           F h |              | h
+              |              |
+              |              |
+             F X' ---------&gt; X'
+                     k'
+</code></pre>
+
+<p>commutes.</p>
+
+<p>Assume <code>Lfix</code> is given by the equation:</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">T</span>  =  <span class="pl-c1">Lfix</span> <span class="pl-c1">X</span>. <span class="pl-c1">F</span> <span class="pl-c1">X</span>  =  <span class="pl-c1">All</span> <span class="pl-c1">X</span>. (<span class="pl-c1">F</span> <span class="pl-c1">X</span> -&gt; <span class="pl-c1">X</span>) -&gt; <span class="pl-c1">X</span>.</pre></div>
+
+<p>As a convenient abbreviation, we will write <code>T</code> for <code>Lfix X. F X</code>.
+Then we can define two functions:</p>
+
+<div class="highlight highlight-source-haskell"><pre>fold  :  <span class="pl-c1">All</span> <span class="pl-c1">X</span>. (<span class="pl-c1">F</span> <span class="pl-c1">X</span> -&gt; <span class="pl-c1">X</span>) -&gt; <span class="pl-c1">T</span> -&gt; <span class="pl-c1">X</span>
+fold  =  \<span class="pl-c1">X</span>. \k: <span class="pl-c1">F</span> <span class="pl-c1">X</span> -&gt; <span class="pl-c1">X</span>. \t:<span class="pl-c1">T</span>. t <span class="pl-c1">X</span> k
+
+<span class="pl-k">in</span>    :  <span class="pl-c1">F</span> <span class="pl-c1">T</span> -&gt; <span class="pl-c1">T</span>
+<span class="pl-k">in</span>    =  \s: <span class="pl-c1">F</span> <span class="pl-c1">T</span>. \<span class="pl-c1">X</span>. \k: <span class="pl-c1">F</span> <span class="pl-c1">X</span> -&gt; <span class="pl-c1">X</span>. k (<span class="pl-c1">F</span> (fold <span class="pl-c1">X</span> k) s).</pre></div>
+
+<p>It follows immediately that the diagram</p>
+
+<pre><code>                     in            
+             F T ----------&gt; T   
+              |              |    
+              |              |    
+(2)  F (fold X k) |              | fold X k
+              |              |
+              |              |
+             F X ----------&gt; X
+                      k
+</code></pre>
+
+<p>commutes.  In other words, <code>(T,in)</code> is an F-algebra from which
+there is a map, called <code>(fold X k)</code>, to every other F-algebra;
+that is, <code>(T,in)</code> is a weakly initial F-algebra.</p>
+
+<p>Let's consider what this means in a particular case.  Take</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">F</span> <span class="pl-c1">X</span>  =  <span class="pl-c1">1</span>+<span class="pl-c1">X</span>.</pre></div>
+
+<p>The values of type <code>1+X</code> have the forms <code>(inl ())</code> and <code>(inr x)</code>, where <code>x:X</code>.
+If <code>f : X -&gt; Y</code>, then <code>F f : 1+X -&gt; 1+Y</code>  is given by</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">F</span> f (inl <span class="pl-c1">()</span>)  =  inl <span class="pl-c1">()</span>
+<span class="pl-c1">F</span> f (inr x)   =  inr (f x).</pre></div>
+
+<p>Now, define <em>Nat</em> to be the least fixpoint of F:</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">Nat</span>  =  <span class="pl-c1">Lfix</span> <span class="pl-c1">X</span>. <span class="pl-c1">1</span>+<span class="pl-c1">X</span>.</pre></div>
+
+<p>This corresponds to the natural numbers: <code>(in (inl ()))</code> represents zero,
+and <code>(in (inr n))</code> represents the successor of <code>n</code>.  Let <code>k : 1+X -&gt; X</code>.
+Then diagram (2) states that</p>
+
+<div class="highlight highlight-source-haskell"><pre>fold <span class="pl-c1">X</span> k (inl <span class="pl-c1">()</span>)  =  k (inl <span class="pl-c1">()</span>)
+fold <span class="pl-c1">X</span> k (inr n)   =  k (inr (fold <span class="pl-c1">X</span> k n)).</pre></div>
+
+<p>If we take z = k (inl ()), and s x = k (inr x)), then we
+can rewrite this in the familiar form:</p>
+
+<div class="highlight highlight-source-haskell"><pre>fold <span class="pl-c1">X</span> k <span class="pl-c1">0</span>      =  z
+fold <span class="pl-c1">X</span> k (n+<span class="pl-c1">1</span>)  =  s (fold <span class="pl-c1">X</span> k n).</pre></div>
+
+<p>That is, the value of <code>(fold X k)</code> is given for zero (namely, <em>z</em>), and is
+found for <code>(n+1)</code> by recursively applying <code>(fold X k)</code> to <code>n</code>, and then
+applying a given function (namely, <em>s</em>) to this result.</p>
+
+<p>As a second example, take</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">F</span> <span class="pl-c1">X</span>  =  <span class="pl-c1">1</span> + <span class="pl-c1">A</span>*<span class="pl-c1">X</span>.</pre></div>
+
+<p>The values of type <code>1+A*X</code> have the forms <code>(inl ())</code> and <code>(inr (a,x))</code>,
+where <code>a:A</code> and <code>x:X</code>.  If <code>f : X -&gt; Y</code>, then <code>F f : 1+A*X -&gt; 1+A*Y</code> is
+given by</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">F</span> f (inl <span class="pl-c1">()</span>)     =  inl <span class="pl-c1">()</span>
+<span class="pl-c1">F</span> f (inr (a,x))  =  inr (a, f x).</pre></div>
+
+<p>Now, define <code>(List A)</code> to be the least fixpoint of <em>F</em>:</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">List</span> <span class="pl-c1">A</span>  =  <span class="pl-c1">Lfix</span> <span class="pl-c1">X</span>. <span class="pl-c1">1</span>+<span class="pl-c1">A</span>*<span class="pl-c1">X</span>.</pre></div>
+
+<p>This corresponds to lists with elements of type <code>A: (in (inl ())</code>
+represents the empty list, also written <em>nil</em>, and <code>(in (inr (a,as))</code>
+represents the list constructed with head a and tail as, also written
+<code>(cons a as)</code>.  Let <code>k : 1+A*X -&gt; X</code>.  Then diagram (2) states that</p>
+
+<div class="highlight highlight-source-haskell"><pre>fold <span class="pl-c1">X</span> k (inl <span class="pl-c1">()</span>)      =  k (inl <span class="pl-c1">()</span>)
+fold <span class="pl-c1">X</span> k (inr (a,as))  =  k (inr (a, fold <span class="pl-c1">X</span> k as)).</pre></div>
+
+<p>If we take <code>n = k (inl ())</code> and <code>c a x = k (inr (a,x))</code>, then
+we can rewrite this in the familiar form</p>
+
+<div class="highlight highlight-source-haskell"><pre>fold <span class="pl-c1">X</span> k nil          =  n
+fold <span class="pl-c1">X</span> k (cons a as)  =  c a (fold (<span class="pl-c1">X</span> k as)).</pre></div>
+
+<p>That is, the value of <code>(fold X k)</code> is given for nil (namely, <em>n</em>), and is
+found for <code>(cons a as)</code> by recursively applying <code>(fold X k)</code> to as, and
+then using a given function (namely, <em>c</em>) to combine  <code>a</code>  with the
+result.</p>
+
+<h3>
+<a id="least-fixpoints-as-initial-algebras" class="anchor" href="#least-fixpoints-as-initial-algebras" aria-hidden="true"><span class="octicon octicon-link"></span></a>LEAST FIXPOINTS AS INITIAL ALGEBRAS</h3>
+
+<p>So far, we have considered only weak initial algebras.  We now give
+necessary and sufficient conditions for this to be a true initial
+algebra.  We first consider the problem for an arbitrary definitions of
+<em>T</em>, <em>fold</em>, <em>in</em>, and then specialise to the particular definitions we have
+given.</p>
+
+<p>In order for <code>(T,in)</code> to be initial, the map <code>(fold X k)</code> must be
+unique, i.e., the only map that makes diagram (2) commute.
+Let h be an arbitrary map from <code>(X,k)</code> to <code>(X',k')</code>; then
+combining (1) and (2) we have</p>
+
+<pre><code>                     in            
+             F T ----------&gt; T   
+              |              |    
+              |              |    
+ F (fold X k) |              | fold X k
+              |              |
+              |      k       |
+             F X ----------&gt; X
+              |              |    
+              |              |    
+          F h |              | h
+              |              |
+              |              |
+             F X' ---------&gt; X' ,
+                     k'
+</code></pre>
+
+<p>yielding a map <code>(h . fold X k)</code> from <code>(T,in) to (X',k')</code>.  But <code>(fold X' k')</code>
+should be the only such map!  Thus, initiality entails that</p>
+
+<pre><code>            k                                fold X k
+    F X ----------&gt; X                    T -----------&gt; X
+     |              |                    |              |
+     |              |                    |              |
+(3)  F h |              | h    implies    id |              | h
+     |              |                    |              |
+     |              |                    |              |
+    F X' ---------&gt; X'                   T -----------&gt; X' .
+            k'                              fold X' k'
+</code></pre>
+
+<p>Further, since <code>(fold T in)</code> is a map <code>T -&gt; T</code>, and id is also such
+a map, initiality also implies that</p>
+
+<div class="highlight highlight-source-haskell"><pre>(<span class="pl-c1">4</span>)         fold <span class="pl-c1">T</span> <span class="pl-k">in</span>  =  <span class="pl-c1">id</span>.</pre></div>
+
+<p>Conversely, (3) and (4) imply than <code>(T,in)</code> is initial.
+Choosing an appropriate instance of (3) gives</p>
+
+<pre><code>            in                              fold T in
+    F T ----------&gt; T                    T -----------&gt; T
+     |              |                    |              |
+     |              |                    |              |
+ F h |              | h    implies    id |              | h
+     |              |                    |              |
+     |              |                    |              |
+    F X ----------&gt; X                    T -----------&gt; X .
+            k                                fold X k
+</code></pre>
+
+<p>The left-hand square states that <code>h</code> is a map from <code>(T,in)</code> into <code>(X,k)</code>;
+and the right-hand square, combined with (4), states that h must
+be <code>(fold X k)</code>.  That is, <code>(fold X k)</code> is the only map from <code>(T,in)</code>
+into <code>(X,k)</code>, as required.</p>
+
+<p>If <code>(T,in)</code> is an initial <em>F-algebra</em>, then "in" is an isomorphism.
+By functoriality, from <code>in : F T -&gt; T</code> we have <code>(F in) : F (F T) -&gt; F T</code>,
+hence <code>(F T, F in)</code> is an F-algebra.  The unique map from <code>(F,in)</code> into this
+algebra is given by</p>
+
+<div class="highlight highlight-source-haskell"><pre>out  :  <span class="pl-c1">T</span> -&gt; <span class="pl-c1">F</span> <span class="pl-c1">T</span>
+out  =  fold (<span class="pl-c1">F</span> <span class="pl-c1">T</span>) (<span class="pl-c1">F</span> <span class="pl-k">in</span>).</pre></div>
+
+<p>To see that "in" and "out" are inverses, stare at the following diagram:</p>
+
+<pre><code>                     in            
+             F T ----------&gt; T   
+              |              |    
+              |              |    
+        F out |              | out
+              |              |
+              |     F in     |
+           F (F T) --------&gt; F T
+              |              |    
+              |              |    
+         F in |              | in
+              |              |
+              |              |
+             F T ----------&gt; T .
+                     in
+</code></pre>
+
+<p>The top square is an instance of (2), and the bottom square commutes
+trivially.  Hence <code>(in . out)</code> is a map from <code>(T,in)</code> to <code>(T,in)</code>; but id
+is also such a map, so by uniqueness we have <code>id = in . out</code>.
+Now from the upper square we have</p>
+
+<div class="highlight highlight-source-haskell"><pre>out . <span class="pl-k">in</span>  =  <span class="pl-c1">F</span> <span class="pl-k">in</span> . <span class="pl-c1">F</span> out  =  <span class="pl-c1">F</span> (<span class="pl-k">in</span> . out)  =  <span class="pl-c1">F</span> <span class="pl-c1">id</span> = <span class="pl-c1">id</span>,</pre></div>
+
+<p>completing the proof.  It is precisely because "in" is an isomorphism
+that we are justified in calling <code>T</code> a fixpoint of <code>F</code>, since we have
+<code>F T ~ T</code>; it is because <code>T</code> is initial that we are justified in calling
+it a least fixpoint.</p>
+
+<p>The argument in the preceding two paragraphs works in any category.  In our
+given category, polymorphic lambda calculus, with the given definitions
+of "fold" and "in", we can go further.  Take (2) as the left-hand
+square of (3); then the right-hand square becomes,</p>
+
+<pre><code>                 fold T in            
+              T -----------&gt; T  
+              |              |    
+              |              |    
+           id |              | fold X k
+              |              |
+              |              |
+              T -----------&gt; X ,
+                 fold X k
+</code></pre>
+
+<p>or, in symbols,</p>
+
+<div class="highlight highlight-source-haskell"><pre>fold <span class="pl-c1">X</span> k (fold <span class="pl-c1">T</span> <span class="pl-k">in</span> t)  =  fold <span class="pl-c1">X</span> k t.</pre></div>
+
+<p>Reducing both applications of (fold X k) yields</p>
+
+<div class="highlight highlight-source-haskell"><pre>     (fold <span class="pl-c1">T</span> <span class="pl-k">in</span> t) <span class="pl-c1">X</span> k  =  t <span class="pl-c1">X</span> k</pre></div>
+
+<p>(this is where we use the definition of "fold").  By the eta rules,
+it follows that</p>
+
+<div class="highlight highlight-source-haskell"><pre>           fold <span class="pl-c1">T</span> <span class="pl-k">in</span> t  =  t</pre></div>
+
+<p>(this is where we use properties of polymorphic lambda calculus).
+Thus, for the given definitions, (3) implies (4), and hence (T,in) is
+an initial F-algebra exactly when (3) holds.</p>
+
+<p>Law (3) does not follow from the reduction laws of polymorphic lambda
+calculus, and indeed there are models that do not satisfy it.  But this
+law is satisfied in many models, including all those having the
+property of PARAMETRICITY (see [Reynolds 83], [Freyd 89], [Wadler 89],
+[Freyd 90], [AMSW 90]).  In particular, in the jargon of [Wadler 89],
+the "Theorem for Free" derived from the type of "fold" is just this
+law.</p>
+
+<p>(A technical point:  The "Theorems for Free" result really deals with
+relations, not functions.  In the diagram (3) each arrow denotes a relation
+rather than a function, namely, the relation induced by the function.
+Except the arrow labeled "id" actually corresponds to the relation
+id' defined by the relation</p>
+
+<div class="highlight highlight-source-haskell"><pre>id' =  (<span class="pl-c1">All</span> r. (<span class="pl-c1">F</span> r -&gt; r) -&gt; r).</pre></div>
+
+<p>Here <code>r-&gt;s</code> relates <code>f:X-&gt;Y to f':X'-&gt;Y'</code> if whenever <code>r</code> relates <code>x</code> to <code>x'</code>
+then <code>s</code> relates <code>(f x)</code> to <code>(f' x')</code>.  And if <code>G</code> is an operation on
+relations and types such that if <code>r:X&lt;-&gt;X'</code> then <code>(G r):(G X)&lt;-&gt;(G X')</code>,
+then <code>(All r. G r)</code> relates <code>g : (All X. G X)</code> to <code>g' : (All X'. G X')</code>
+(these are both the same type), if whenever r is a relation from <code>X</code> to
+<code>X'</code> then <code>(g X) (G r) (g' X)</code>.  <em>It is not the case in all models that <code>id'</code>`
+is the identity relation!</em>  This is the purpose of the identity lemma
+in [Reynolds 83] -- in any model satisfying this lemma, id' will be
+the identity.  A parametric model is just one that satisfies the
+identity lemma.  Hence, although the "Theorems for Free" result
+applies in any model, it is only in a parametric model that (3)
+and (4) must hold.)</p>
+
+<h3>
+<a id="iterators-and-recursors" class="anchor" href="#iterators-and-recursors" aria-hidden="true"><span class="octicon octicon-link"></span></a>ITERATORS AND RECURSORS</h3>
+
+<p>The "fold" operation is what has sometimes been called an iterator.
+The value of <code>(fold X k x)</code> is computed by applying <code>(fold X k)</code>
+recursively to each substructure of <code>x</code> and applying <code>k</code> to the result.
+More formally, we can refer to the substructure of <code>x</code> by taking
+<code>x = in y</code>, for some <code>y : F T</code>, and we can apply <code>(fold X k)</code> to each
+substructure of <code>x</code> by taking <code>(F (fold X k) y)</code>. Then the sentence above
+can be expressed in symbols:</p>
+
+<div class="highlight highlight-source-haskell"><pre>fold <span class="pl-c1">X</span> k (<span class="pl-k">in</span> y)  =  k (<span class="pl-c1">F</span> (fold <span class="pl-c1">X</span> k)).</pre></div>
+
+<p>This fundamental property is just equivalent to saying that
+"fold" is a map of F-algebras.</p>
+
+<p>The recursor is a slight variant of the iterator.  It is defined by</p>
+
+<div class="highlight highlight-source-haskell"><pre>rec : <span class="pl-c1">All</span> <span class="pl-c1">X</span>. (<span class="pl-c1">F</span> (<span class="pl-c1">X</span>*<span class="pl-c1">T</span>) -&gt; <span class="pl-c1">X</span>) -&gt; <span class="pl-c1">T</span> -&gt; (<span class="pl-c1">X</span>*<span class="pl-c1">T</span>)
+rec = \<span class="pl-c1">X</span>. \g: <span class="pl-c1">F</span> (<span class="pl-c1">X</span>*<span class="pl-c1">T</span>) -&gt; <span class="pl-c1">X</span>. fold (<span class="pl-c1">X</span>*<span class="pl-c1">T</span>) &lt;g, <span class="pl-k">in</span> . <span class="pl-c1">F</span> <span class="pl-c1">snd</span>&gt;.</pre></div>
+
+<p>The value of <code>(rec X g)</code> at <code>x</code> is computed by applying <code>(rec X g)</code> recursively
+to each substructure and applying g to the result, and pairing this with the
+value of <code>x</code>.  Thus where k expects a value computed on the substructure,
+g expects a value computed on the substructure paired with the substructure
+itself.  This is expressed by the laws:</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">fst</span> (rec <span class="pl-c1">X</span> g (<span class="pl-k">in</span> y))  =  g (<span class="pl-c1">F</span> (rec <span class="pl-c1">X</span> g) y),
+<span class="pl-c1">snd</span> (rec <span class="pl-c1">X</span> g x)       =  x.</pre></div>
+
+<p>The first is an easy consequence of the definition of "rec".  To derive
+the second, instantiate (3) to yield:</p>
+
+<pre><code>     &lt;g, in . F snd&gt;                fold (X*T) &lt;g, in . F snd&gt;
+
+  F (X*T) -------&gt; X*T                   T ----------&gt; X*T
+     |              |                    |              |
+     |              |                    |              |
+     F snd |              | snd   implies   id |              | snd
+     |              |                    |              |
+     |              |                    |              |
+    F T ----------&gt; T                    T -----------&gt; T
+            in                               fold T in
+</code></pre>
+
+<p>Then the left square commutes trivially, the top line of the right square
+is "rec", and the bottom line is "id" by (4), yielding the desired law.</p>
+
+<h3>
+<a id="greatest-fixpoints" class="anchor" href="#greatest-fixpoints" aria-hidden="true"><span class="octicon octicon-link"></span></a>GREATEST FIXPOINTS</h3>
+
+<p>Greatest fixpoints are exactly dual.  We will need a little notation
+for dealing with existential types: unfortunately, there isn't a
+standard one.  The following typing and reduction rules should serve to
+introduce the notation, which is based on viewing existential types as
+generalised products:</p>
+
+<pre><code>Products:
+
+A |- u:U    A |- v:V
+-----------------------
+A |- (u,v) : U*V
+
+A |- t : U*V     A, x:U, y:V |- w:W
+-------------------------------------
+A |- (case t of {(x,y) -&gt; w}) : W
+
+(case (u,v) of {(x,y) -&gt; w})  ---&gt;  w[u/x, v/y]
+
+Existentials:
+
+A |- v:V[U/X]
+-----------------------
+A |- (U,v) : Exists X.V
+
+A |- t : Exists X.V     A, y:V |- w:W
+-------------------------------------  (X not in A, W)
+A |- (case t of {(X,y) -&gt; w}) : W
+
+(case (U,v) of {(X,y) -&gt; w})  ---&gt;  w[U/X, v/y]
+
+We will combine these in a straightforward way, so that, for instance,
+
+case t of {(X,(k,x)) -&gt; w}
+
+will be used as an abbreviation for
+
+case t of {(X,y) -&gt; case y of {(k,x) -&gt; w}}.
+</code></pre>
+
+<p>Mitchell and Plotkin [MP 88] write (X,u) as (pack X u) and
+(case t of {(X,y) -&gt; w}) as (abstype X y is t in w).</p>
+
+<p>We now take the dual of the previous development.  The greatest
+fixpoint of <code>F</code> corresponds to a terminal <em>F-coalgebra</em>.  An F-coalgebra is
+a pair <code>(X,k)</code> consisting of an object <code>X</code> and an arrow <code>k : X -&gt; F X</code>, and a
+morphism between <code>(X,k)</code> and <code>(X',k')</code> is given by an arrow <code>h : X -&gt; X'</code>
+such that the diagram</p>
+
+<pre><code>                   k            
+            X ----------&gt; F X   
+            |              |    
+            |              |    
+          h |              | F h
+            |              |
+            |              |
+            X' ---------&gt; F X'
+                   k'
+</code></pre>
+
+<p>commutes.  Assume Gfix is given by the equation:</p>
+
+<div class="highlight highlight-source-haskell"><pre><span class="pl-c1">T</span>  =  <span class="pl-c1">Gfix</span> <span class="pl-c1">X</span>. <span class="pl-c1">F</span> <span class="pl-c1">X</span>  =  <span class="pl-c1">Exists</span> <span class="pl-c1">X</span>. (<span class="pl-c1">X</span> -&gt; <span class="pl-c1">F</span> <span class="pl-c1">X</span>) * <span class="pl-c1">X</span>.</pre></div>
+
+<p>Then we can define two functions:</p>
+
+<pre><code>unfold  :  All X. (X -&gt; F X) -&gt; X -&gt; T
+unfold  =  \X. \k: X -&gt; F X. \x:T. (X,(k,x)),
+
+out     :  T -&gt; F T
+out     =  \t:T. case t of {(X,(k,x)) -&gt; F (unfold X k) (k x)}.
+</code></pre>
+
+<p>It follows immediately that the diagram</p>
+
+<pre><code>                   k
+            X ----------&gt; F X
+            |              |    
+            |              |    
+ unfold X k |              | F (unfold X k)
+            |              |
+            |              |
+            T ----------&gt; F T   
+                  out            
+</code></pre>
+
+<p>commutes.  In other words, <code>(T,out)</code> is an F-algebra into which
+there is a map, called <code>(unfold X k)</code>, from every other F-algebra;
+that is, <code>(T,out)</code> is a weakly terminal F-coalgebra.</p>
+
+<p>As before, if <code>(T,out)</code> is truly a terminal F-coalgebra, then "out"
+is an isomorphism, with the inverse given by</p>
+
+<pre><code>in  :  F T -&gt; T
+in  =  unfold (F T) (F out).
+</code></pre>
+
+<p>Furthermore, we will have that <code>(T,out)</code> is terminal <strong>iff</strong> the condition</p>
+
+<pre><code>          k                               unfold X k     
+   X ----------&gt; F X                   X -----------&gt; T
+   |              |                    |              |
+   |              |                    |              |
+ h |              | F h   implies    h |              | id
+   |              |                    |              |
+   |              |                    |              |
+   X' ---------&gt; F X'                  X' ----------&gt; T
+          k'                             unfold X' k'
+</code></pre>
+
+<p>holds.</p>
+
+<p>(A technical point: this equivalence depends on the equivalence
+of the surjective pairing rule and the equivalent rule for pair types:</p>
+
+<pre><code>case t of {(x,y) -&gt; h (x,y)}  =  h t,
+case t of {(X,y) -&gt; h (X,y)}  =  h t.
+</code></pre>
+
+<p>If our calculus contains pairs and existentials as primitives, then
+it is reasonable to insist on these rules.  But if, as is often the
+case, we define pairs and existentials in terms of universals, then
+these rules will not necessarily hold.  But they will necessarily
+hold in all models satisfying parametricity!  So in parametric
+models we are assured the existence of true greatest fixpoints.)</p>
+
+<p>Example:  Streams of integers are yielded by the greatest fixpoint of
+<code>T(X) = Int * X</code>.  The formula above instantiates to</p>
+
+<pre><code>   IntStream
+=  Gfix X. Int * X
+=  Exists X. (X -&gt; Int * X) * X
+~  Exists X. (X -&gt; Int) * (X -&gt; X) * X.
+</code></pre>
+
+<p>Essentially, what is going on here is that from the abstract type
+<code>(X, (h, t, x))</code> one can only extract terms of the form <code>(h (t^i x))</code>,
+which corresponds to the <code>i</code>'th element of the stream.</p>
+
+<p>Hagino suggests that streams be defined by the operations
+unfold, head, and tail [Hagino 87].  We can define these by:</p>
+
+<pre><code>unfold  :  All X.  ((X -&gt; Int) * (X -&gt; X) * X) -&gt; IntStream
+        =  \X. \(h, t, x). (X, (h, t, x))
+
+head    :  IntStream -&gt; Int
+        =  \s. case s of {(X, (h, t, x)) -&gt; h x}
+
+tail    :  IntStream -&gt; IntStream
+        =  \s. case s of {(X, (h, t, x)) -&gt; (X, (h, t, t x))}
+</code></pre>
+
+<p>These are just the transposition of "unfold" and "in"
+across the isomorphism <code>(X -&gt; Int * X) ~ (X -&gt; Int) * (X -&gt; X)</code>.</p>
+
+<h3>
+<a id="pragmatics" class="anchor" href="#pragmatics" aria-hidden="true"><span class="octicon octicon-link"></span></a>PRAGMATICS</h3>
+
+<p>Regarding pragmatics, it is well known that the embedding of least
+fixpoints is less efficient than one would like.  For instance, the
+operation to find the tail of a list takes time proportional to the
+length of the list: one would hope that this takes constant time.
+Greatest fixpoints have a dual problem: finding the tail of a stream is
+cheap, but consing an element onto the front of a stream is more
+expensive than one would like.  So one would still be tempted to add
+least and greatest fixpoints to a language for pragmatic reasons, though
+it is good to know that in doing so one does not change the language in
+any fundamental way (in particular, strong normalisation is still
+preserved).</p>
+
+<p>Is there a way of coding lists in polymorphic lambda calculus that <code>(a)</code>
+uses space proportional to the length of the list, <code>(b)</code> performs cons in
+constant time, and <code>(c)</code> performs tail in constant time?  Or is there a
+proof that this is impossible?  So far as I know, this is an open
+question.</p>
+
+<p>ACKNOWLEDGEMENT</p>
+
+<p>I'm grateful to John Hughes for comments on an earlier version of this
+text.  [Update:  And to Fruhwirth Clemens and Gabor Greif for spotting
+typos.]</p>
+
+<p>BIBLIOGRAPHY</p>
+
+<p>[AMSW 90]  S. Abramsky, J. Mitchell, A. Scedrov, and P. Wadler,
+Theorems for free, categorically.  In preparation.</p>
+
+<p>[Freyd 89]  P. Freyd, Structural polymorphism.  Series of three e-mail
+messages to "types" newsgroup, March 1989.</p>
+
+<p>[Freyd 90]  P. Freyd, Recursive types reduced to inductive types.  In
+J. Mitchell, editor, 5'th Symposium on Logic in Computer Science,
+Philadelphia, June 1990.  IEEE.</p>
+
+<p>[GLT 89]  J.-Y. Girard, Y. Lafont, and P. Taylor, Types and Proofs.
+Cambridge University Press, 1989.</p>
+
+<p>[Hagino 87]  T. Hagino, A typed lambda calculus with categorical type
+constructors.  In Pitt, et al., editors, Category Theory in Computer
+Science, Edinburgh, September 1987.  LNC 283, Springer Verlag.</p>
+
+<p>[Mendler 87]  N. P. Mendler, Recursive types and type constraints
+in second-order lambda calculus.  In 2'nd Symposium on Logic in
+Computer Science, Ithaca, New York, June 1987.  IEEE.</p>
+
+<p>[MP 88]  J. C. Mitchell and G. D. Plotkin, Abstract types have
+existential types.  ACM Transactions of Programming Languages,
+10(3):470--502, 1988.  Preliminary version appeared in Proceedings
+12'th ACM Symposium on Principles of Programming Languages, 1985.</p>
+
+<p>[Reynolds 83]  J. C. Reynolds,  Types, abstraction, and parametric
+polymorphism.  In R. E. A. Mason, editor, Information Processing 83,
+pp. 513--523.  North-Holland, Amsterdam.</p>
+
+<p>[Wadler 89]  P. Wadler, Theorems for free!  In 4'th International
+Conference on Functional Programming Languages and Computer
+Architecture, London, September 1989.  ACM.</p>
+
+<p>[Wraith 89]  G. C. Wraith, A note on categorical data types.  In Pitt,
+et al., editors, Category Theory in Computer Science, Manchester,
+September 1989.  LNCS 389, Springer Verlag.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/damienstanton">damienstanton</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
